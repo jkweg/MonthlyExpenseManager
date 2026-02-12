@@ -47,7 +47,7 @@ public class MonthlyBudget {
     }
 
     public String toString(){
-        return year + "-" + monthName;
+        return year + "-" + monthName + " " + initialBalance;
     }
 
     public double getRemainingBalance() {

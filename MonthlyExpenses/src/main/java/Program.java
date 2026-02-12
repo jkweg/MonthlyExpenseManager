@@ -1,17 +1,36 @@
+import model.Expense;
 import model.MonthlyBudget;
 import repository.BudgetRepository;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public class Program {
 
     public static void main(String[] args) {
-        MonthlyBudget testowyBudzet = new MonthlyBudget(2026, "Luty", 5000.0);
         BudgetRepository budgetRepo = new BudgetRepository();
-        System.out.println("Próba zapisu budżetu do bazy...");
-        int generatedId = budgetRepo.saveBudget(testowyBudzet);
-        if (generatedId != -1) {
-            System.out.println("Sukces! Budżet zapisany. Nadane ID w bazie to: " + generatedId);
-        } else {
-            System.out.println("Błąd! Coś poszło nie tak. Sprawdź konsolę pod kątem błędów (Exception).");
+        budgetRepo.clearDatabase();
+
+        MonthlyBudget testowyBudzet = new MonthlyBudget(2026, "Luty", 5000.0);
+
+        int idLutego = budgetRepo.saveBudget(testowyBudzet);
+        Expense zakupy = new Expense("Biedronka", 150.0, LocalDate.now());
+        Expense zakupy2 = new Expense("Lidl", 150.0, LocalDate.now());
+        Expense zakupy3 = new Expense("Lewiatan", 150.0, LocalDate.now());
+        budgetRepo.saveExpense(zakupy, idLutego);
+        budgetRepo.saveExpense(zakupy2, idLutego);
+        budgetRepo.saveExpense(zakupy3, idLutego);
+
+        List<MonthlyBudget> budgets = budgetRepo.getAllBudgets();
+
+        for(MonthlyBudget budget : budgets){
+            System.out.println(budget.toString());
+        }
+
+        List<Expense> expenses = budgetRepo.getExpensesByBudgetId(1);
+
+        for(Expense expense : expenses){
+            System.out.println(expense.toString());
         }
     }
 }
