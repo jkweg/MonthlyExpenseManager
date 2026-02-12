@@ -1,28 +1,17 @@
-import model.Expense;
 import model.MonthlyBudget;
-
-import java.time.LocalDate;
-
+import repository.BudgetRepository;
 
 public class Program {
 
-    public static void main(){
-        MonthlyBudget monthlyBudget = new MonthlyBudget(2026,"Luty" , 3000);
-        Expense expense = new Expense("jedzenie", 300,LocalDate.now());
-        Expense expense2 = new Expense("jedzenie2", 300,LocalDate.now());
-        Expense expense3 = new Expense("jedzenie3", 300,LocalDate.now());
-        monthlyBudget.addExpense(expense);
-        System.out.println(monthlyBudget.getRemainingBalance());
-        monthlyBudget.addExpense(expense2);
-        System.out.println(monthlyBudget.getRemainingBalance());
-        monthlyBudget.addExpense(expense3);
-        System.out.println(monthlyBudget.getRemainingBalance());
-        monthlyBudget.showExpenses();
-
-        BudgetManager budgetManager = new BudgetManager();
-        budgetManager.createNewBudget(monthlyBudget);
-
-        budgetManager.showBudgets();
-        budgetManager.showCurrentBudgetsStatus();
+    public static void main(String[] args) {
+        MonthlyBudget testowyBudzet = new MonthlyBudget(2026, "Luty", 5000.0);
+        BudgetRepository budgetRepo = new BudgetRepository();
+        System.out.println("Próba zapisu budżetu do bazy...");
+        int generatedId = budgetRepo.saveBudget(testowyBudzet);
+        if (generatedId != -1) {
+            System.out.println("Sukces! Budżet zapisany. Nadane ID w bazie to: " + generatedId);
+        } else {
+            System.out.println("Błąd! Coś poszło nie tak. Sprawdź konsolę pod kątem błędów (Exception).");
+        }
     }
 }
