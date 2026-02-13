@@ -68,11 +68,12 @@ public class BudgetRepository {
         ResultSet rs = stmt.executeQuery(sql)){
 
             while(rs.next()){
+                int id = rs.getInt("id");
                 int year = rs.getInt("year");
                 String month = rs.getString("month_name");
                 Double initialBalance = rs.getDouble("initial_balance");
 
-                MonthlyBudget budget = new MonthlyBudget(year, month, initialBalance);
+                MonthlyBudget budget = new MonthlyBudget(id,year, month, initialBalance);
 
                 budgets.add(budget);
 
@@ -94,10 +95,11 @@ public class BudgetRepository {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
+                    int id = rs.getInt("id");
                     String description = rs.getString("description");
                     double amount = rs.getDouble("amount");
                     LocalDate date = rs.getDate("date").toLocalDate();
-                    expenses.add(new Expense(description, amount, date));
+                    expenses.add(new Expense(id,description, amount, date));
                 }
             }
         } catch (SQLException e) {

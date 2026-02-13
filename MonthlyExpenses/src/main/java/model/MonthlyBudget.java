@@ -5,13 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MonthlyBudget {
+    private int id;
     private int year;
     private String monthName;
     private double initialBalance;
     private List<Expense> expenseList;
 
 
-    public MonthlyBudget(int year , String monthName, double monthlyBudget) {
+    public MonthlyBudget(int id, int year , String monthName, double monthlyBudget) {
+        this.id = id;
         this.year = year;
         this.monthName = monthName;
         this.initialBalance = monthlyBudget;
@@ -56,4 +58,6 @@ public class MonthlyBudget {
                 .sum();
         return initialBalance - totalSpent;
     }
+
+    public int getId() { return id; }
 }

@@ -4,11 +4,13 @@ import java.time.LocalDate;
 
 public class Expense {
 
+    private int id;
     private double amount;
     private LocalDate date;
     private String description;
 
-    public Expense(String description,double money, LocalDate date) {
+    public Expense(int id , String description,double money, LocalDate date) {
+        this.id = id;
         this.amount = money;
         this.date = date;
         this.description = description;
@@ -42,4 +44,6 @@ public class Expense {
     public String toString() {
         return description + " | " + amount + " | " + date;
     }
+
+    public int getId() { return id; }
 }

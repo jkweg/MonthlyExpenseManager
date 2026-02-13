@@ -11,12 +11,12 @@ public class Program {
         BudgetRepository budgetRepo = new BudgetRepository();
         budgetRepo.clearDatabase();
 
-        MonthlyBudget testowyBudzet = new MonthlyBudget(2026, "Luty", 5000.0);
+        MonthlyBudget testowyBudzet = new MonthlyBudget(0,2026, "Luty", 5000.0);
 
         int idLutego = budgetRepo.saveBudget(testowyBudzet);
-        Expense zakupy = new Expense("Biedronka", 150.0, LocalDate.now());
-        Expense zakupy2 = new Expense("Lidl", 150.0, LocalDate.now());
-        Expense zakupy3 = new Expense("Lewiatan", 150.0, LocalDate.now());
+        Expense zakupy = new Expense(0,"Biedronka", 150.0, LocalDate.now());
+        Expense zakupy2 = new Expense(0,"Lidl", 150.0, LocalDate.now());
+        Expense zakupy3 = new Expense(0,"Lewiatan", 150.0, LocalDate.now());
         budgetRepo.saveExpense(zakupy, idLutego);
         budgetRepo.saveExpense(zakupy2, idLutego);
         budgetRepo.saveExpense(zakupy3, idLutego);
@@ -27,10 +27,13 @@ public class Program {
             System.out.println(budget.toString());
         }
 
-        List<Expense> expenses = budgetRepo.getExpensesByBudgetId(1);
+        List<Expense> expenses = budgetRepo.getExpensesByBudgetId(idLutego);
 
         for(Expense expense : expenses){
             System.out.println(expense.toString());
         }
+
+        System.out.println("-----------------");
+
     }
 }
