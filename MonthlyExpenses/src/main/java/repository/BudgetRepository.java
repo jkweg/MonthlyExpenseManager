@@ -2,6 +2,7 @@ package repository;
 
 import db.DatabaseConnection;
 import model.Expense;
+import model.ExpenseCategory;
 import model.MonthlyBudget;
 import java.sql.*;
 import java.time.LocalDate;
@@ -31,7 +32,7 @@ public class BudgetRepository {
     }
 
     public void saveExpense(Expense expense, int budgetId) {
-        String sql = "INSERT INTO expenses (description, amount, date, budget_id) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO expenses (description, amount, date, budget_id,category) VALUES (?, ?, ?, ?,?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -40,6 +41,7 @@ public class BudgetRepository {
             pstmt.setDouble(2, expense.getAmount());
             pstmt.setDate(3, java.sql.Date.valueOf(expense.getDate()));
             pstmt.setInt(4, budgetId);
+            pstmt.setString(5, expense.getCategory().name()); // Dodajesz 5-ty parametr
 
             pstmt.executeUpdate();
             System.out.println("Wydatek '" + expense.getDescription() + "' zapisany w bazie!");
@@ -99,7 +101,9 @@ public class BudgetRepository {
                     String description = rs.getString("description");
                     double amount = rs.getDouble("amount");
                     LocalDate date = rs.getDate("date").toLocalDate();
-                    expenses.add(new Expense(id,description, amount, date));
+                    String categoryStr = rs.getString("category");
+                    ExpenseCategory category = ExpenseCategory.valueOf(categoryStr);
+                    expenses.add(new Expense(id,description, amount, date,category));
                 }
             }
         } catch (SQLException e) {

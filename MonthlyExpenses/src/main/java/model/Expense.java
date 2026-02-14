@@ -8,12 +8,14 @@ public class Expense {
     private double amount;
     private LocalDate date;
     private String description;
+    private ExpenseCategory category;
 
-    public Expense(int id , String description,double money, LocalDate date) {
+    public Expense(int id , String description,double money, LocalDate date, ExpenseCategory category) {
         this.id = id;
         this.amount = money;
         this.date = date;
         this.description = description;
+        this.category = category;
     }
 
     public double getAmount() {
@@ -46,4 +48,6 @@ public class Expense {
     }
 
     public int getId() { return id; }
+
+    public ExpenseCategory getCategory() { return category; }
 }

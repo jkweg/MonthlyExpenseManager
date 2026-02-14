@@ -1,4 +1,5 @@
 import model.Expense;
+import model.ExpenseCategory;
 import model.MonthlyBudget;
 import repository.BudgetRepository;
 
@@ -14,9 +15,9 @@ public class Program {
         MonthlyBudget testowyBudzet = new MonthlyBudget(0,2026, "Luty", 5000.0);
 
         int idLutego = budgetRepo.saveBudget(testowyBudzet);
-        Expense zakupy = new Expense(0,"Biedronka", 150.0, LocalDate.now());
-        Expense zakupy2 = new Expense(0,"Lidl", 150.0, LocalDate.now());
-        Expense zakupy3 = new Expense(0,"Lewiatan", 150.0, LocalDate.now());
+        Expense zakupy = new Expense(0,"Biedronka", 150.0, LocalDate.now(), ExpenseCategory.GROCERIES);
+        Expense zakupy2 = new Expense(0,"Lidl", 150.0, LocalDate.now(),ExpenseCategory.GROCERIES);
+        Expense zakupy3 = new Expense(0,"Lewiatan", 150.0, LocalDate.now(),ExpenseCategory.GROCERIES);
         budgetRepo.saveExpense(zakupy, idLutego);
         budgetRepo.saveExpense(zakupy2, idLutego);
         budgetRepo.saveExpense(zakupy3, idLutego);
