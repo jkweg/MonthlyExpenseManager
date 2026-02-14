@@ -7,7 +7,9 @@ import model.MonthlyBudget;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BudgetRepository {
 
@@ -111,5 +113,26 @@ public class BudgetRepository {
         }
 
         return expenses;
+    }
+
+    public Map<ExpenseCategory, Double> getCategoryReport(int budgetId) {
+        Map<ExpenseCategory, Double> report = new HashMap<>();
+        String sql = "SELECT category, SUM(amount) AS total FROM expenses WHERE budget_id = ? GROUP BY category";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, budgetId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ExpenseCategory cat = ExpenseCategory.valueOf(rs.getString("category"));
+                double sum = rs.getDouble("total");
+                report.put(cat, sum);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return report;
     }
 }

@@ -60,4 +60,10 @@ public class MonthlyBudget {
     }
 
     public int getId() { return id; }
+
+    public double getTotalByCategory(ExpenseCategory category) {
+        return expenseList.stream().filter(e -> e.getCategory() == category)
+                .mapToDouble(Expense::getAmount).sum();
+
+    }
 }
