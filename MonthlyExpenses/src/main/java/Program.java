@@ -48,6 +48,19 @@ public class Program {
             System.out.println(entry.getKey() + ": " + entry.getValue() + " zl");
         }
 
+        if (!expenses.isEmpty()) {
+            int idDoUsuniecia = expenses.get(0).getId();
+            budgetRepo.deleteExpense(idDoUsuniecia);
+        }
+
+        if (expenses.size() > 1) {
+            Expense edytowany = expenses.get(1);
+            edytowany.setAmount(999.99);
+            edytowany.setDescription("Zmieniona cena");
+
+            budgetRepo.updateExpense(edytowany);
+        }
+
 
     }
 }

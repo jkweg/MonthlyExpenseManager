@@ -135,4 +135,42 @@ public class BudgetRepository {
         }
         return report;
     }
+
+    public void deleteExpense(int id) {
+        String sql = "DELETE FROM expenses WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, id);
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                System.out.println("Wydatek o ID " + id + " został usunięty.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateExpense(Expense expense) {
+
+        String sql = "UPDATE expenses SET description = ?, amount = ?, date = ?, category = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, expense.getDescription());
+            pstmt.setDouble(2, expense.getAmount());
+            pstmt.setDate(3, java.sql.Date.valueOf(expense.getDate()));
+            pstmt.setString(4, expense.getCategory().name());
+            pstmt.setInt(5, expense.getId());
+
+            pstmt.executeUpdate();
+            System.out.println("Wydatek o ID " + expense.getId() + " został zaktualizowany.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
