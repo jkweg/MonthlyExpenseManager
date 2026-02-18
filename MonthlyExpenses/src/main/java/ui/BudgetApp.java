@@ -12,16 +12,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.Expense;
 import model.ExpenseCategory;
 import model.MonthlyBudget;
 import repository.BudgetRepository;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import service.BudgetExporter;
 
 public class BudgetApp extends Application {
 
@@ -54,11 +58,17 @@ public class BudgetApp extends Application {
         VBox rightPane = new VBox(15);
         rightPane.setPadding(new Insets(0, 0, 0, 15));
 
+        rightPane.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+
         pieChart = new PieChart();
         pieChart.setTitle("Struktura wydatków");
 
         summaryLabel = new Label("Wybierz budżet...");
         summaryLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        summaryLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        summaryLabel.setAlignment(javafx.geometry.Pos.CENTER);
+        summaryLabel.setMaxWidth(Double.MAX_VALUE);
 
         rightPane.getChildren().addAll(pieChart, summaryLabel);
         layout.setRight(rightPane);
@@ -104,7 +114,11 @@ public class BudgetApp extends Application {
             else showAlert("Wybierz budżet do usunięcia!");
         });
 
-        box.getChildren().addAll(label, budgetSelector, btnNew, btnEdit, btnDelete);
+        Button btnExport = new Button("Eksport CSV");
+
+        btnExport.setOnAction(e -> exportToCSV());
+
+        box.getChildren().addAll(label, budgetSelector, btnNew, btnEdit, btnDelete, btnExport);
         return box;
     }
 
@@ -136,6 +150,17 @@ public class BudgetApp extends Application {
         });
         contextMenu.getItems().add(deleteItem);
         table.setContextMenu(contextMenu);
+
+        table.setRowFactory(tv -> {
+            TableRow<Expense> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty()) ) {
+                    Expense rowData = row.getItem();
+                    editExpenseDialog(rowData);
+                }
+            });
+            return row;
+        });
 
         return table;
     }
@@ -228,7 +253,7 @@ public class BudgetApp extends Application {
 
         ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
         for (Map.Entry<ExpenseCategory, Double> entry : report.entrySet()) {
-            pieData.add(new PieChart.Data(entry.getKey().name(), entry.getValue()));
+            pieData.add(new PieChart.Data(entry.getKey().toString(), entry.getValue()));
         }
         pieChart.setData(pieData);
     }
@@ -375,6 +400,97 @@ public class BudgetApp extends Application {
                 table.getItems().clear();
                 summaryLabel.setText("");
                 pieChart.setData(FXCollections.observableArrayList());
+            }
+        }
+    }
+
+    private void editExpenseDialog(Expense expense) {
+        Dialog<Expense> dialog = new Dialog<>();
+        dialog.setTitle("Edycja Wydatku");
+        dialog.setHeaderText("Edytuj szczegóły wydatku");
+
+        ButtonType saveButtonType = new ButtonType("Zapisz", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField descField = new TextField(expense.getDescription());
+        TextField amountField = new TextField(String.valueOf(expense.getAmount()));
+
+        ComboBox<ExpenseCategory> catBox = new ComboBox<>();
+        catBox.getItems().addAll(ExpenseCategory.values());
+        catBox.setValue(expense.getCategory());
+
+        DatePicker datePicker = new DatePicker(expense.getDate());
+
+        grid.add(new Label("Opis:"), 0, 0);
+        grid.add(descField, 1, 0);
+        grid.add(new Label("Kwota:"), 0, 1);
+        grid.add(amountField, 1, 1);
+        grid.add(new Label("Kategoria:"), 0, 2);
+        grid.add(catBox, 1, 2);
+        grid.add(new Label("Data:"), 0, 3);
+        grid.add(datePicker, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                try {
+                    String newDesc = descField.getText();
+                    double newAmount = Double.parseDouble(amountField.getText().replace(",", "."));
+                    ExpenseCategory newCat = catBox.getValue();
+                    LocalDate newDate = datePicker.getValue();
+
+                    return new Expense(expense.getId(), newDesc, newAmount, newDate, newCat);
+                } catch (NumberFormatException e) {
+                    showAlert("Błędna kwota!");
+                    return null;
+                }
+            }
+            return null;
+        });
+
+        Optional<Expense> result = dialog.showAndWait();
+        result.ifPresent(updatedExpense -> {
+            budgetRepo.updateExpense(updatedExpense);
+            refreshData();
+        });
+    }
+
+    private void exportToCSV() {
+        if (currentBudget == null) {
+            showAlert("Wybierz budżet, aby go wyeksportować!");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Zapisz budżet jako CSV");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Pliki CSV (*.csv)", "*.csv"));
+
+        String suggestedName = "Budzet_" + currentBudget.getMonthName() + "_" + currentBudget.getYear();
+        fileChooser.setInitialFileName(suggestedName);
+
+        File file = fileChooser.showSaveDialog(table.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                List<Expense> expenses = budgetRepo.getExpensesByBudgetId(currentBudget.getId());
+
+                service.BudgetExporter.saveExpensesToCSV(file, expenses);
+
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Sukces");
+                alert.setHeaderText(null);
+                alert.setContentText("Plik został pomyślnie zapisany:\n" + file.getAbsolutePath());
+                alert.showAndWait();
+
+            } catch (IOException e) {
+                showAlert("Błąd zapisu pliku: " + e.getMessage());
             }
         }
     }
