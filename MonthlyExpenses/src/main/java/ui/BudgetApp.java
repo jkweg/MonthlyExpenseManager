@@ -9,6 +9,7 @@ import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -20,6 +21,7 @@ import repository.BudgetRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class BudgetApp extends Application {
 
@@ -75,24 +77,34 @@ public class BudgetApp extends Application {
     private HBox createTopMenu() {
         HBox box = new HBox(10);
         box.setPadding(new Insets(0, 0, 15, 0));
+        box.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         Label label = new Label("Wybierz budżet:");
-        budgetSelector = new ComboBox<>();
-        budgetSelector.setPrefWidth(250);
 
+        budgetSelector = new ComboBox<>();
+        budgetSelector.setPrefWidth(200);
         budgetSelector.setOnAction(e -> {
             currentBudget = budgetSelector.getValue();
             refreshData();
         });
 
-        Button btnNew = new Button("Utwórz nowy budżet");
-        btnNew.setOnAction(e -> {
-            MonthlyBudget mb = new MonthlyBudget(0, 2026, "Nowy Miesiąc", 5000.0);
-            budgetRepo.saveBudget(mb);
-            loadBudgets();
+        Button btnNew = new Button("Nowy");
+        btnNew.setOnAction(e -> showNewBudgetDialog());
+
+        Button btnEdit = new Button("Edytuj");
+        btnEdit.setOnAction(e -> {
+            if (currentBudget != null) editCurrentBudget();
+            else showAlert("Wybierz budżet do edycji!");
         });
 
-        box.getChildren().addAll(label, budgetSelector, btnNew);
+        Button btnDelete = new Button("Usuń");
+        btnDelete.setStyle("-fx-background-color: #ffcccc; -fx-text-fill: red; -fx-border-color: red;");
+        btnDelete.setOnAction(e -> {
+            if (currentBudget != null) deleteCurrentBudget();
+            else showAlert("Wybierz budżet do usunięcia!");
+        });
+
+        box.getChildren().addAll(label, budgetSelector, btnNew, btnEdit, btnDelete);
         return box;
     }
 
@@ -227,5 +239,143 @@ public class BudgetApp extends Application {
         alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();
+    }
+
+    private void showNewBudgetDialog() {
+        Dialog<MonthlyBudget> dialog = new Dialog<>();
+        dialog.setTitle("Nowy Budżet");
+        dialog.setHeaderText("Podaj dane dla nowego miesiąca");
+
+        ButtonType loginButtonType = new ButtonType("Zapisz", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(loginButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        Spinner<Integer> yearSpinner = new Spinner<>(2020, 2030, LocalDate.now().getYear());
+
+        String[] polishMonths = {
+                "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+                "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        };
+        ComboBox<String> monthBox = new ComboBox<>(FXCollections.observableArrayList(polishMonths));
+        monthBox.getSelectionModel().select(LocalDate.now().getMonthValue() - 1);
+
+        TextField amountField = new TextField();
+        amountField.setPromptText("np. 5000.00");
+
+        grid.add(new Label("Rok:"), 0, 0);
+        grid.add(yearSpinner, 1, 0);
+        grid.add(new Label("Miesiąc:"), 0, 1);
+        grid.add(monthBox, 1, 1);
+        grid.add(new Label("Budżet (PLN):"), 0, 2);
+        grid.add(amountField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == loginButtonType) {
+                try {
+                    int year = yearSpinner.getValue();
+                    String month = monthBox.getValue();
+                    double amount = Double.parseDouble(amountField.getText().replace(",", "."));
+
+                    // ID jest 0, bo baza danych sama je nada
+                    return new MonthlyBudget(0, year, month, amount);
+                } catch (NumberFormatException e) {
+                    showAlert("Błędna kwota budżetu!");
+                    return null;
+                }
+            }
+            return null;
+        });
+
+        Optional<MonthlyBudget> result = dialog.showAndWait();
+
+        result.ifPresent(budget -> {
+            budgetRepo.saveBudget(budget);
+            loadBudgets();
+        });
+    }
+
+    private void editCurrentBudget() {
+        if (currentBudget == null) return;
+
+        Dialog<MonthlyBudget> dialog = new Dialog<>();
+        dialog.setTitle("Edycja Budżetu");
+        dialog.setHeaderText("Edytuj dane budżetu");
+
+        ButtonType saveButtonType = new ButtonType("Zapisz", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        Spinner<Integer> yearSpinner = new Spinner<>(2020, 2030, currentBudget.getYear());
+
+        String[] polishMonths = {
+                "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+                "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        };
+        ComboBox<String> monthBox = new ComboBox<>(FXCollections.observableArrayList(polishMonths));
+        monthBox.setValue(currentBudget.getMonthName());
+
+        TextField amountField = new TextField(String.valueOf(currentBudget.getInitialBalance()));
+
+        grid.add(new Label("Rok:"), 0, 0);
+        grid.add(yearSpinner, 1, 0);
+        grid.add(new Label("Miesiąc:"), 0, 1);
+        grid.add(monthBox, 1, 1);
+        grid.add(new Label("Budżet (PLN):"), 0, 2);
+        grid.add(amountField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                try {
+                    currentBudget.setYear(yearSpinner.getValue());
+                    currentBudget.setMonthName(monthBox.getValue());
+                    currentBudget.setInitialBalance(Double.parseDouble(amountField.getText().replace(",", ".")));
+                    return currentBudget;
+                } catch (NumberFormatException e) {
+                    showAlert("Błędna kwota!");
+                    return null;
+                }
+            }
+            return null;
+        });
+
+        Optional<MonthlyBudget> result = dialog.showAndWait();
+        result.ifPresent(budget -> {
+            budgetRepo.updateBudget(budget);
+            loadBudgets();
+        });
+    }
+
+    private void deleteCurrentBudget() {
+        if (currentBudget == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Potwierdzenie usunięcia");
+        alert.setHeaderText("Czy na pewno chcesz usunąć budżet: " + currentBudget.toString() + "?");
+        alert.setContentText("Zostaną usunięte również WSZYSTKIE wydatki z tego miesiąca!");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            budgetRepo.deleteBudget(currentBudget.getId());
+            currentBudget = null;
+            loadBudgets();
+
+            if (budgetSelector.getItems().isEmpty()) {
+                table.getItems().clear();
+                summaryLabel.setText("");
+                pieChart.setData(FXCollections.observableArrayList());
+            }
+        }
     }
 }

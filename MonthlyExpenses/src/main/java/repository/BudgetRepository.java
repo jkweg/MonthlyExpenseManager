@@ -173,4 +173,46 @@ public class BudgetRepository {
             e.printStackTrace();
         }
     }
+
+    public void updateBudget(MonthlyBudget budget) {
+        String sql = "UPDATE monthly_budgets SET year = ?, month_name = ?, initial_balance = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, budget.getYear());
+            pstmt.setString(2, budget.getMonthName());
+            pstmt.setDouble(3, budget.getInitialBalance());
+            pstmt.setInt(4, budget.getId());
+
+            pstmt.executeUpdate();
+            System.out.println("Budżet zaktualizowany: " + budget);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteBudget(int budgetId) {
+        String deleteExpensesSql = "DELETE FROM expenses WHERE budget_id = ?";
+        String deleteBudgetSql = "DELETE FROM monthly_budgets WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            try (PreparedStatement pstmt = conn.prepareStatement(deleteExpensesSql)) {
+                pstmt.setInt(1, budgetId);
+                pstmt.executeUpdate();
+            }
+
+            try (PreparedStatement pstmt = conn.prepareStatement(deleteBudgetSql)) {
+                pstmt.setInt(1, budgetId);
+                pstmt.executeUpdate();
+            }
+
+            System.out.println("Budżet o ID " + budgetId + " został usunięty.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
