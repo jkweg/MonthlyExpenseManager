@@ -10,6 +10,8 @@ public class Expense {
     private String description;
     private ExpenseCategory category;
 
+    public Expense() {}
+
     public Expense(int id , String description,double money, LocalDate date, ExpenseCategory category) {
         this.id = id;
         this.amount = money;
