@@ -3,7 +3,7 @@
 A desktop application built with **Java** ☕ and **JavaFX** 🖼️ that helps users track their monthly budgets, manage expenses, and analyze their spending habits. The app uses **PostgreSQL** 🐘 for data persistence and features an intuitive graphical user interface ✨.
 
 ## 📸 Preview
-![App Screenshot](docs/screenshot.png)
+![App Screenshot](MonthlyExpenses/images/screenshot.png)
 
 ## 🚀 Features
 * 📅 **Monthly Budget Management**: Create, edit, and delete monthly budgets with an initial balance.
